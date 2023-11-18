@@ -1,118 +1,143 @@
-import Image from 'next/image'
-import { Inter } from 'next/font/google'
+// pages/index.tsx
+import { useState } from 'react';
+import axios from 'axios';
 
-const inter = Inter({ subsets: ['latin'] })
+const AuthForm: React.FC<{ onSubmit: (data: { action: string; [key: string]: string }) => void; buttonText: string }> = ({ onSubmit, buttonText }) => {
+  const [formData, setFormData] = useState({ email: '', password: '' });
 
-export default function Home() {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setFormData({ ...formData, [e.target.name]: e.target.value });
+  };
+
+  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    onSubmit(formData);
+  }; 
+
   return (
-    <main
-      className={`flex min-h-screen flex-col items-center justify-between p-24 ${inter.className}`}
-    >
-      <div className="z-10 max-w-5xl w-full items-center justify-between font-mono text-sm lg:flex">
-        <p className="fixed left-0 top-0 flex w-full justify-center border-b border-gray-300 bg-gradient-to-b from-zinc-200 pb-6 pt-8 backdrop-blur-2xl dark:border-neutral-800 dark:bg-zinc-800/30 dark:from-inherit lg:static lg:w-auto  lg:rounded-xl lg:border lg:bg-gray-200 lg:p-4 lg:dark:bg-zinc-800/30">
-          Get started by editing&nbsp;
-          <code className="font-mono font-bold">src/pages/index.tsx</code>
-        </p>
-        <div className="fixed bottom-0 left-0 flex h-48 w-full items-end justify-center bg-gradient-to-t from-white via-white dark:from-black dark:via-black lg:static lg:h-auto lg:w-auto lg:bg-none">
-          <a
-            className="pointer-events-none flex place-items-center gap-2 p-8 lg:pointer-events-auto lg:p-0"
-            href="https://vercel.com?utm_source=create-next-app&utm_medium=default-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            By{' '}
-            <Image
-              src="/vercel.svg"
-              alt="Vercel Logo"
-              className="dark:invert"
-              width={100}
-              height={24}
-              priority
-            />
-          </a>
+    <form onSubmit={handleSubmit}>
+      <label>Email:</label>
+      <input type="email" name="email" value={formData.email} onChange={handleChange} required />
+
+      <label>Password:</label>
+      <input type="password" name="password" value={formData.password} onChange={handleChange} required />
+
+      <button type="submit">{buttonText}</button>
+    </form>
+  );
+};
+
+const BookForm: React.FC<{ onSubmit: (data: { action: string; [key: string]: string }) => void; buttonText: string }> = ({ onSubmit, buttonText }) => {
+  const [formData, setFormData] = useState({
+    title: '',
+    author: '',
+    publisher: '',
+    year: '',
+    pages: '',
+  });
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setFormData({ ...formData, [e.target.name]: e.target.value });
+  };
+
+  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    onSubmit(formData);
+  };
+
+  return (
+    <form onSubmit={handleSubmit}>
+      <label>Title:</label>
+      <input type="text" name="title" value={formData.title} onChange={handleChange} required />
+
+      <label>Author:</label>
+      <input type="text" name="author" value={formData.author} onChange={handleChange} required />
+
+      <label>Publisher:</label>
+      <input type="text" name="publisher" value={formData.publisher} onChange={handleChange} required />
+
+      <label>Year:</label>
+      <input type="text" name="year" value={formData.year} onChange={handleChange} required />
+
+      <label>Pages:</label>
+      <input type="text" name="pages" value={formData.pages} onChange={handleChange} required />
+
+      <button type="submit">{buttonText}</button>
+    </form>
+  );
+};
+
+const HomePage: React.FC = () => {
+  const [token, setToken] = useState('');
+
+  const handleLogin = async (data: { email: string; password: string }) => {
+    try {
+      const response = await axios.post('/api', { action: 'login', ...data });
+      setToken(response.data.token);
+      console.log('User logged in. Token:', response.data.token);
+    } catch (error) {
+      console.error('Login failed:', error.response.data.message);
+    }
+  };
+
+  const handleLogout = () => {
+    setToken('');
+  };
+
+  const handleCreateBook = async (data: { [key: string]: string }) => {
+    try {
+      const response = await axios.post('/api', { action: 'createBook', ...data });
+      console.log('Book created:', response.data.book);
+    } catch (error) {
+      console.error('Book creation failed:', error.response.data.message);
+    }
+  };
+
+  const handleUpdateBook = async (data: { [key: string]: string }) => {
+    try {
+      const response = await axios.post('/api', { action: 'updateBook', ...data });
+      console.log('Book updated:', response.data.book);
+    } catch (error) {
+      console.error('Book update failed:', error.response.data.message);
+    }
+  };
+
+  const handleDeleteBook = async (bookId: string) => {
+    try {
+      const response = await axios.post('/api', { action: 'deleteBook', id: bookId });
+      console.log('Book deleted:', response.data.book);
+    } catch (error) {
+      console.error('Book deletion failed:', error.response.data.message);
+    }
+  };
+
+  return (
+    <div>
+      {!token ? (
+        <div>
+          <h1>Login</h1>
+          <AuthForm onSubmit={handleLogin} buttonText="Login" />
         </div>
-      </div>
+      ) : (
+        <div>
+          <h1>Logout</h1>
+          <button onClick={handleLogout}>Logout</button>
 
-      <div className="relative flex place-items-center before:absolute before:h-[300px] before:w-[480px] before:-translate-x-1/2 before:rounded-full before:bg-gradient-radial before:from-white before:to-transparent before:blur-2xl before:content-[''] after:absolute after:-z-20 after:h-[180px] after:w-[240px] after:translate-x-1/3 after:bg-gradient-conic after:from-sky-200 after:via-blue-200 after:blur-2xl after:content-[''] before:dark:bg-gradient-to-br before:dark:from-transparent before:dark:to-blue-700/10 after:dark:from-sky-900 after:dark:via-[#0141ff]/40 before:lg:h-[360px]">
-        <Image
-          className="relative dark:drop-shadow-[0_0_0.3rem_#ffffff70] dark:invert"
-          src="/next.svg"
-          alt="Next.js Logo"
-          width={180}
-          height={37}
-          priority
-        />
-      </div>
+          <h1>Create Book</h1>
+          <BookForm onSubmit={handleCreateBook} buttonText="Create Book" />
 
-      <div className="mb-32 grid text-center lg:max-w-5xl lg:w-full lg:mb-0 lg:grid-cols-4 lg:text-left">
-        <a
-          href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=default-template-tw&utm_campaign=create-next-app"
-          className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2 className={`mb-3 text-2xl font-semibold`}>
-            Docs{' '}
-            <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
-              -&gt;
-            </span>
-          </h2>
-          <p className={`m-0 max-w-[30ch] text-sm opacity-50`}>
-            Find in-depth information about Next.js features and API.
-          </p>
-        </a>
+          <h1>Update Book</h1>
+          <BookForm onSubmit={handleUpdateBook} buttonText="Update Book" />
 
-        <a
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=default-template-tw&utm_campaign=create-next-app"
-          className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2 className={`mb-3 text-2xl font-semibold`}>
-            Learn{' '}
-            <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
-              -&gt;
-            </span>
-          </h2>
-          <p className={`m-0 max-w-[30ch] text-sm opacity-50`}>
-            Learn about Next.js in an interactive course with&nbsp;quizzes!
-          </p>
-        </a>
+          <h1>Delete Book</h1>
+          <label>Book ID:</label>
+          <input type="text" onChange={(e) => handleDeleteBook(e.target.value)} />
 
-        <a
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=default-template-tw&utm_campaign=create-next-app"
-          className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2 className={`mb-3 text-2xl font-semibold`}>
-            Templates{' '}
-            <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
-              -&gt;
-            </span>
-          </h2>
-          <p className={`m-0 max-w-[30ch] text-sm opacity-50`}>
-            Discover and deploy boilerplate example Next.js&nbsp;projects.
-          </p>
-        </a>
+          <button>Delete Book</button>
+        </div>
+      )}
+    </div>
+  );
+};
 
-        <a
-          href="https://vercel.com/new?utm_source=create-next-app&utm_medium=default-template-tw&utm_campaign=create-next-app"
-          className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2 className={`mb-3 text-2xl font-semibold`}>
-            Deploy{' '}
-            <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
-              -&gt;
-            </span>
-          </h2>
-          <p className={`m-0 max-w-[30ch] text-sm opacity-50`}>
-            Instantly deploy your Next.js site to a shareable URL with Vercel.
-          </p>
-        </a>
-      </div>
-    </main>
-  )
-}
+export default HomePage;
